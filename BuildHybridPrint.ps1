@@ -2,6 +2,10 @@
 #By Chris Blackburn
 #Follow updates and issues @ https://github.com/thetootall/adscripts/blob/master/BuildHybridPrint.ps1
 #Version 0.5
+#Largely based on these blogs but thanks to all the others to help support it making this far:
+#https://docs.microsoft.com/en-us/windows-server/administration/hybrid-cloud-print/hybrid-cloud-print-deploy-passthrough
+#https://www.scconfigmgr.com/2018/01/22/deploy-hybrid-cloud-print
+#http://calvreid.co.uk/2018/08/12/hybrid-cloud-print-deployment/
 
 #Server Prep
 Write-host "Reading Powershell version"
@@ -109,10 +113,10 @@ Copy-Item -Path "$SourcePath\System.Data.SQLite.EF6.$SQLiteVersion\lib\net46\Sys
 
 #download the Management Tool
 Write-host "Downloading the SQLITE tools, please wait...." -BackgroundColor White -ForegroundColor Black
-$temp = “C:\temp\download”
-$extract = $temp + “\sqlite-tools”
-$file = “sqlite-tools-win32-x86-3230000.zip”
-$filepath = $temp + “\” + $file
+$temp = "C:\temp\download"
+$extract = $temp + "\sqlite-tools"
+$file = "sqlite-tools-win32-x86-3230000.zip"
+$filepath = $temp + "\" + $file
 
 New-Item -Path $temp -ItemType Directory -Verbose
 
