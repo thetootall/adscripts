@@ -1,7 +1,7 @@
 #Automated script for building the Azure Hybrid Print service in your environment
 #By Chris Blackburn
+#Follow updates and issues @ https://github.com/thetootall/adscripts/blob/master/BuildHybridPrint.ps1
 #Version 0.5
-#Built to account for public / split-brain DNS for URLs
 
 #Server Prep
 Write-host "Reading Powershell version"
