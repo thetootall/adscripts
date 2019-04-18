@@ -75,39 +75,47 @@ Install-Module -Name "PublishCloudPrinter"
 Import-Module PublishCloudPrinter
 
 cd 'C:\Program Files\WindowsPowerShell\Modules\PublishCloudPrinter\1.0.0.0'
-.\CloudPrintDeploy.ps1 -AzureTenant $mytenantdomain -AzureTenantGuid $mytenantid
+.\CloudPrintDeploy.ps1 -AzureTenant $mytenantdomain -AzureTenantGuid $mytenantid -verbose
+#Note that this may NOT install the services if there is an incorrect build of Windows Server 2016??
 
 #step 3 - Install SSL certificate
 Write-host "Please ensure you have copied the PFX file to your server"
 Pause
-$certpath = Read-host "Please enter the full path to the PFX certificate" -BackgroundColor White -ForegroundColor Black
+$certpath = Read-host "Please enter the full path to the PFX certificate:"
 #in the lab I used: "C:\Temp\Cert\wildcard-pw-wild.pfx"
 $password = Read-Host -Prompt "Enter password" -AsSecureString
 
 $mycert = Get-PfxCertificate -FilePath $certpath
 $mythumb = $mycert.Thumbprint
 
-$certpath = Read-host "Importing and binding SSL certificate to the Default Web Site" -BackgroundColor White -ForegroundColor Black
 Import-PfxCertificate -FilePath $certpath -CertStoreLocation "Cert:\LocalMachine\My" -Password $password
 #https://devblogs.microsoft.com/scripting/weekend-scripter-use-powershell-to-update-ssl-bindings/
+Import-Module WebAdministration #Fixed error binding cert because module was not loaded
 Get-Item IIS:\SslBindings\0.0.0.0!443 | Remove-Item
 get-item -Path "cert:\LocalMachine\My\$mythumb" | new-item -path IIS:\SslBindings\0.0.0.0!443
 
 Write-host "Installing SQL Lite...." -BackgroundColor Yellow -ForegroundColor Black
 Register-PackageSource -Name nuget.org -ProviderName NuGet -Location https://www.nuget.org/api/v2/ -Trusted -Force
 Install-Package system.data.sqlite -providername NuGet
+#to uninstall: Uninstall-Package system.data.sqlite -providername NuGet
 $sqlpak = Get-Package system.data.sqlite
 $sqlver = $sqlpak.version
 
 $SourcePath = "C:\Program Files\PackageManagement\NuGet\Packages"
 $SQLiteVersion = $sqlver #The SQLLite version that you installed
 $DesPath = "C:\inetpub\wwwroot\MopriaCloudService"
-Copy-Item -Path "$SourcePath\System.Data.SQLite.Core.$SQLiteVersion\lib\net46\System.Data.SQLite.dll" -Destination "$DesPath\bin\System.Data.SQLite.dll" -Force -Verbose
+
 if (!(Test-Path "$DesPath\bin\x86")) {
     New-Item -Path "$DesPath\bin\x86" -ItemType Directory -Verbose
 }
+if (!(Test-Path "$DesPath\bin\x64")) {
+    New-Item -Path "$DesPath\bin\x64" -ItemType Directory -Verbose
+}
+#Copy the x86 Interop Module
 Copy-Item -Path "$SourcePath\System.Data.SQLite.Core.$SQLiteVersion\build\net46\x86\SQLite.Interop.dll" -Destination "$DesPath\bin\x86\SQLite.Interop.dll" -Force -Verbose
+#Copy the x64 Interop module
 Copy-Item -Path "$SourcePath\System.Data.SQLite.Core.$SQLiteVersion\build\net46\x64\SQLite.Interop.dll" -Destination "$DesPath\bin\x64\SQLite.Interop.dll" -Force -Verbose
+Copy-Item -Path "$SourcePath\System.Data.SQLite.Core.$SQLiteVersion\lib\net46\System.Data.SQLite.dll" -Destination "$DesPath\bin\System.Data.SQLite.dll" -Force -Verbose
 Copy-Item -Path "$SourcePath\System.Data.SQLite.Linq.$SQLiteVersion\lib\net46\System.Data.SQLite.Linq.dll" -Destination "$DesPath\bin\System.Data.SQLite.Linq.dll" -Force -Verbose
 Copy-Item -Path "$SourcePath\System.Data.SQLite.EF6.$SQLiteVersion\lib\net46\System.Data.SQLite.EF6.dll" -Destination "$DesPath\bin\System.Data.SQLite.EF6.dll" -Force -Verbose
 
@@ -137,18 +145,12 @@ $installpath = $extract + “\sqlite-tools-win32-x86-3230000” + $installer
 
 $invokecmd = “cmd.exe /c $installpath MopriaDeviceDb.db ‘.read MopriaSQLiteDb.sql'”
 Invoke-Expression $invokecmd
-
 Write-host "Please Update SQLite references in the web.config to $sqlver" -BackgroundColor Red -ForegroundColor white
-
 Start-Process "notepad" "C:\inetpub\wwwroot\MopriaCloudService\web.config"
-
 Write-host "When you're ready, press Enter" -BackgroundColor Red -ForegroundColor white
 Pause
-
 #Step 5 - Install The Azure Application Proxy Connector
-
 Write-host "Please install the Application Proxy Service Connector now." -BackgroundColor Yellow -ForegroundColor Black 
-
 Start-Process "iexplore" "https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/AppProxy"
 
 Write-host "When you're ready, press Enter" -BackgroundColor Red -ForegroundColor white
