@@ -1,7 +1,7 @@
 #Automated script for building the Azure Hybrid Print service in your environment
 #By Chris Blackburn
 #Follow updates and issues @ https://github.com/thetootall/adscripts/blob/master/BuildHybridPrint.ps1
-#Version 0.5
+#Version 0.6 - Added menu of options and consistent startup experience
 #Largely based on these blogs but thanks to all the others to help support it making this far:
 #https://docs.microsoft.com/en-us/windows-server/administration/hybrid-cloud-print/hybrid-cloud-print-deploy-passthrough
 #https://www.scconfigmgr.com/2018/01/22/deploy-hybrid-cloud-print
