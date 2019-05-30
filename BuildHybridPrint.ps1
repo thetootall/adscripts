@@ -29,7 +29,7 @@ Write-host "Reading Powershell version"
 $version = (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full' -Name Release)
 $versionnum = $version.release
 
-If ($versionnum -ne "461814"){
+If ($versionnum -lt "461814"){
 Write-host "Examining the .NET framework version to support newer versions of Azure cmdlets, please wait" -Backgroundcolor Yellow -Foregroundcolor Black
 #How we determine build https://github.com/dotnet/docs/blob/master/docs/framework/migration-guide/how-to-determine-which-versions-are-installed.md
 Write-host ".NET Framework 4.7.2 not installed, please allow for install & reboot" -BackgroundColor Yellow -ForegroundColor Black
@@ -199,18 +199,22 @@ $cldnative = "Hybrid Cloud Print Native App"
 $cldsvcdiscURL = "http://MopriaDiscoveryService/CloudPrint"
 $cldwebappURL = "http://MicrosoftEnterpriseCloudPrint/CloudPrint"
 
-$urlsvcdisc = "https://mcs." + $domain + "/mcs"
-$urlwebapp = "https://ecs." + $domain + "/ecp"
+$urlsvcdisc = "https://mcs." + $domain + "/mcs/"
+$urlwebapp = "https://ecp." + $domain + "/ecp/"
 
-Write-host "Building Discovery URL as $urldisc" -BackgroundColor Yellow -ForegroundColor Black 
+Write-host "Building Discovery URL as $urlsvcdisc" -BackgroundColor Yellow -ForegroundColor Black 
 Write-host "Building Proxy URL as $urlwebapp" -BackgroundColor Yellow -ForegroundColor Black 
 
 Write-host "Please ensure both domains exist inside of your DNS services prior to creation - or they will fail" -BackgroundColor Red -ForegroundColor White
 Write-host "When you're ready, press Enter" -BackgroundColor Red -ForegroundColor white
 Pause
 
+#start Native App Build
+$azureendpointbuild = Read-host "Please acknowledge Y if you're ready to create the Endpoints"
+If ($azureendpointbuild -eq "Y"){
 #Setup the Discovery Endpoint First
 Write-host "Creating Discovery Endpoint, please wait"  -BackgroundColor White -ForegroundColor Black
+Write-host "$cldsvcdisc endpoint URL: $urlsvcdisc"
 New-AzureADApplicationProxyApplication -DisplayName $cldsvcdisc -ExternalUrl $urlsvcdisc -InternalUrl $urlsvcdisc -ExternalAuthenticationType Passthru
 
 $azureID1 = Get-AzureADApplication | ?{$_.displayname -like $cldsvcdisc}
@@ -222,6 +226,7 @@ $azureID1.IdentifierUris
 
 #Setup the Proxy Endpoint Second
 Write-host "Creating Proxy Endpoint, please wait"  -BackgroundColor White -ForegroundColor Black
+Write-host "$cldwebapp endpoint URL: $urlwebapp"
 New-AzureADApplicationProxyApplication -DisplayName $cldwebapp -ExternalUrl $urlwebapp -InternalUrl $urlwebapp -ExternalAuthenticationType Passthru
 
 $azureID2 = Get-AzureADApplication | ?{$_.displayname -like $cldwebapp}
@@ -231,12 +236,18 @@ $azureapp2 = $azureID2.appid
 $azureID2 | Set-AzureADApplication -IdentifierUris $cldwebappURL
 $azureID2.IdentifierUris
 
+}
+#End Endpoint creation
+
+#start Native App Build
+$azureappbuild = Read-host "Please acknowledge Y if you're ready to create the Native Apps"
+If ($azureappbuild -eq "Y"){
 #Configure Native App
 $azureURL3var = "ms-appx-web://Microsoft.AAD.BrokerPlugin/S-1-15-2-3784861210-599250757-1266852909-3189164077-45880155-1246692841-283550366"
 
 #Creating a native App https://stackoverflow.com/questions/51376242/azure-ad-application-register-how-to-provide-application-type-when-registeri
 Write-host "Creating Native App, please wait"  -BackgroundColor White -ForegroundColor Black
-New-AzureADServicePrincipal -DisplayName $cldnative -ReplyUrls $azureURL3var -PublicClient $true
+New-AzureADApplication -DisplayName $cldnative -ReplyUrls $azureURL3var -PublicClient $true
 
 $azureID3 = Get-AzureADApplication | ?{$_.displayname -like $cldnative}
 
@@ -261,15 +272,16 @@ Write-host "Please add the Endpoint with permissions directly in the Azure porta
 Start-Process "iexplore" "$azapp3url"
 
 Pause
-
+}
 #Future improvement = write API permissions directly
 #assign application permissions https://stackoverflow.com/questions/42164581/how-to-configure-a-new-azure-ad-application-through-powershell/42166700
+#https://techcommunity.microsoft.com/t5/Azure-Developer-Community-Blog/DevOps-trick-8211-Provision-Azure-Active-Directory-Apps-in-a/ba-p/336760
 #Install-Script -Name Grant-AzureApiAccess
 
 #Update Registry
 #https://blog.netwrix.com/2018/09/11/how-to-get-edit-create-and-delete-registry-keys-with-powershell/
 
-Write-host "Updating Mopria service URL in the registry as $urlweb" -BackgroundColor Yellow -ForegroundColor Black
+Write-host "Updating Mopria service URL in the registry as $urlwebapp" -BackgroundColor Yellow -ForegroundColor Black
 Set-Itemproperty -path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CloudPrint\MopriaDiscoveryService' -Name 'URL' -value $urlwebapp
 (Get-ItemProperty -Path 'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\CloudPrint\MopriaDiscoveryService' -Name 'URL') | select URL
 
