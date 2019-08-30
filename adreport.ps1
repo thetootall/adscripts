@@ -1553,7 +1553,7 @@ function Get-DomainInfo($DomainName)
     
     Write-Host ""
     Write-Host ""
-    Write-Host -ForegroundColor white -BackgroundColor black "The end of Active Directory report. Please return adobject.csv and directory.txt."
+    Write-Host -ForegroundColor white -BackgroundColor black "The end of Active Directory report. Please email adobject.csv and directory.txt to consultant."
     # End of data display
 
 
