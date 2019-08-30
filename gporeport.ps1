@@ -13,3 +13,6 @@ Import-Module GroupPolicy
 $dc = Get-ADDomainController -Discover -Service PrimaryDC
 $domain = (get-ADDomain).forest
 Get-GPOReport -All -Domain $domain -Server $dc -ReportType HTML -Path C:\Temp\GPOReportsAll.html
+
+Write-Host -ForegroundColor white -BackgroundColor black "The end of Active Directory report. Please email GPLinkReport.csv & GPOReportsAll.html to consultant."
+# End of data display
