@@ -1,16 +1,5 @@
-################################################################################
-################################################################################
-## Script description                                                         ##
-##                                                                            ##
-## Name      : ADReport.ps1                                                   ##
-## Version   : 0.2                                                            ##
-## Date      : 2014-12-15                                                     ##
-## Language  : PowerShell cmd-lets                                            ##
-## License   : Proprietary                                                    ##
-## Owner     : Krzysztof Pytko (iSiek)                                        ##
-## Authors   : Krzysztof Pytko (iSiek)  <kpytko at go2 dot pl>                ##
-################################################################################
-################################################################################
+#Original version at https://kpytko.files.wordpress.com/2013/12/adreport-ps1-v2.doc
+#Updated to account for new versions
 
 start-transcript directory.txt
 
@@ -54,7 +43,7 @@ function Get-DomainInfo($DomainName)
 
         # Get Domain Controller with at least Windows Server 2008 R2 OS 
         
-        $DCListFiltered = Get-ADDomainController -Server $domain -Filter { operatingSystem -like "Windows Server 2008 R2*" -or operatingSystem -like "Windows Server 2012*" -or operatingSystem -like "Windows Server Technical Preview"  } | Select * -ExpandProperty Name
+        $DCListFiltered = Get-ADDomainController -Server $domain -Filter { operatingSystem -like "Windows Server 2008 R2*" -or operatingSystem -like "Windows Server 2012*" -or operatingSystem -like "Windows Server 2016*" -or operatingSystem -like "Windows Server 2019*"} | Select * -ExpandProperty Name
         $DCListFiltered | %{ $DCListFilteredIndex = $DCListFilteredIndex+1 }
        
         # End of 2008R2 DC list
@@ -72,7 +61,7 @@ function Get-DomainInfo($DomainName)
 
                 # check DFL and get Fine-Grained Password Policies
 
-                if ( $dfl -like "Windows2008Domain" -or $dfl -like "Windows2008R2Domain" -or $dfl -like "Windows2012Domain" -or $dfl -like "Windows2012R2Domain" )
+                if ( $dfl -like "Windows2008Domain" -or $dfl -like "Windows2008R2Domain" -or $dfl -like "Windows2012Domain" -or $dfl -like "Windows2012R2Domain" -or $dfl -like "Windows2016Domain" -or $dfl -like "Windows2019Domain")
 
                     {
                     
@@ -154,6 +143,7 @@ function Get-DomainInfo($DomainName)
         $cmp_os_7 = 0
         $cmp_os_8 = 0
         $cmp_os_81 = 0
+        $cmp_os_10 = 0
 
         $cmp_srvos_2000 = 0
         $cmp_srvos_2003 = 0
@@ -161,6 +151,8 @@ function Get-DomainInfo($DomainName)
         $cmp_srvos_2008r2 = 0
         $cmp_srvos_2012 = 0
         $cmp_srvos_2012r2 = 0
+        $cmp_srvos_2016 = 0
+        $cmp_srvos_2019 = 0
 
         # Get information about Active Directory objects
         $ou_objectsNo = (Get-ADOrganizationalUnit -Server $domain -Filter * | Measure-Object).Count
@@ -173,6 +165,7 @@ function Get-DomainInfo($DomainName)
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows 7*") { $cmp_os_7 = $cmp_os_7 + 1 } }
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows 8 *") { $cmp_os_8 = $cmp_os_8 + 1 } }
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows 8.1*") { $cmp_os_81 = $cmp_os_81 + 1 } }
+        $cmp_objects | %{ if ($_.operatingSystem -like "Windows 10*") { $cmp_os_10 = $cmp_os_10 + 1 } }
 
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows 2000 Server*") { $cmp_srvos_2000 = $cmp_srvos_2000 + 1 } }
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows Server 2003*") { $cmp_srvos_2003 = $cmp_srvos_2003 + 1 } }
@@ -180,6 +173,8 @@ function Get-DomainInfo($DomainName)
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows Server 2008 R2*") { $cmp_srvos_2008r2 = $cmp_srvos_2008r2 + 1 } }
         $cmp_objects | %{ if ( ($_.operatingSystem -like "Windows Server 2012 *") -and ($_.operatingSystem -notlike "Windows Server 2012 R2*") ) { $cmp_srvos_2012 = $cmp_srvos_2012 + 1 } }
         $cmp_objects | %{ if ($_.operatingSystem -like "Windows Server 2012 R2*") { $cmp_srvos_2012r2 = $cmp_srvos_2012r2 + 1 } }
+        $cmp_objects | %{ if ($_.operatingSystem -like "Windows Server 2016*") { $cmp_srvos_2016 = $cmp_srvos_2016 + 1 } }
+        $cmp_objects | %{ if ($_.operatingSystem -like "Windows Server 2019*") { $cmp_srvos_2019 = $cmp_srvos_2019 + 1 } }
 
         $grp_objects = Get-ADGroup -Server $domain -Filter * -Properties GroupScope
         $grp_objectsNo = $grp_objects.Count
@@ -229,6 +224,8 @@ function Get-DomainInfo($DomainName)
                 Windows2008R2Domain { Write-Host -ForegroundColor green "Windows Server 2008 R2" }
                 Windows2012Domain { Write-Host -ForegroundColor green "Windows Server 2012" }
                 Windows2012R2Domain { Write-Host -ForegroundColor green "Windows Server 2012 R2" }
+                Windows2016Domain { Write-Host -ForegroundColor green "Windows Server 2016" }
+                Windows2019Domain { Write-Host -ForegroundColor green "Windows Server 2019" }
                 default { Write-Host -ForegroundColor red "Unknown Domain Functional Level:"$dfl }
                 
             }
@@ -438,6 +435,8 @@ function Get-DomainInfo($DomainName)
         Write-Host -ForegroundColor green $cmp_os_8
         Write-host -ForegroundColor yellow "  Windows 8.1                    : " -NoNewLine
         Write-Host -ForegroundColor green $cmp_os_81
+        Write-host -ForegroundColor yellow "  Windows 10                    : " -NoNewLine
+        Write-Host -ForegroundColor green $cmp_os_10
         
         Write-Host ""
         
@@ -454,6 +453,10 @@ function Get-DomainInfo($DomainName)
         Write-Host -ForegroundColor green $cmp_srvos_2012
         Write-host -ForegroundColor yellow "  Windows Server 2012R2          : " -NoNewLine
         Write-Host -ForegroundColor green $cmp_srvos_2012r2
+        Write-host -ForegroundColor yellow "  Windows Server 2016          : " -NoNewLine
+        Write-Host -ForegroundColor green $cmp_srvos_2016
+        Write-host -ForegroundColor yellow "  Windows Server 2019          : " -NoNewLine
+        Write-Host -ForegroundColor green $cmp_srvos_2019
         
         Write-Host ""
         # End of total OUs number
@@ -857,7 +860,7 @@ function Get-DomainInfo($DomainName)
 
     # Display collected data
     Clear-Host
-    Write-Host -ForegroundColor white -BackgroundColor black "Active Directory report v0.2 by Krzysztof Pytko (iSiek)"
+    Write-Host -ForegroundColor white -BackgroundColor black "Active Directory report"
 
     Write-Host ""
     Write-Host ""
@@ -878,6 +881,7 @@ function Get-DomainInfo($DomainName)
 
     # Determine and display schema version
     Write-Host "Active Directory schema version"
+	#reference for schema numbers: https://eightwone.com/references/ad-schema-versions/
 
     switch ($SchemaVersion.objectVersion)
 
@@ -892,7 +896,8 @@ function Get-DomainInfo($DomainName)
             52 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server 8 Beta" }
             56 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server 2012" }
             69 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server 2012 R2" }
-            72 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server Technical Preview" }
+            87 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server 2016" }
+            88 { Write-Host -ForegroundColor green $SchemaVersion.objectVersion "- Windows Server 2016" }
             default { Write-Host -ForegroundColor red "unknown - "$SchemaVersion.objectVersion }
        
         }
@@ -909,6 +914,7 @@ function Get-DomainInfo($DomainName)
     $ExchangeSchemaVersion = Get-ADObject -Server $forest -LDAPFilter "(&(objectClass=attributeSchema)(name=ms-Exch-Schema-Version-Pt))" -SearchBase $SchemaPartition -Properties rangeUpper
 
     $ExchangeSchema = $ExchangeSystemObjects.objectVersion + $ExchangeSchemaVersion.rangeUpper
+	#Reference for version numbers: https://eightwone.com/references/schema-versions/
 
     if ($ExchangeSchemaVersion -ne $nul)
     
@@ -918,22 +924,22 @@ function Get-DomainInfo($DomainName)
             
                 {
                 
-                    13806  { Write-Host -ForegroundColor green "Exchange Server 2003" }
-                    21265 { Write-Host -ForegroundColor green "Exchange Server 2007" }
-                    22337 { Write-Host -ForegroundColor green "Exchange Server 2007 Service Pack 1" }
-                    25843 { Write-Host -ForegroundColor green "Exchange Server 2007 Service Pack 2" }
-                    25846 { Write-Host -ForegroundColor green "Exchange Server 2007 Service Pack 3" }
-                    27261 { Write-Host -ForegroundColor green "Exchange Server 2010" }
-                    27766 { Write-Host -ForegroundColor green "Exchange Server 2010 Service Pack 1" }
-                    27772 { Write-Host -ForegroundColor green "Exchange Server 2010 Service Pack 2" }
-                    27774 { Write-Host -ForegroundColor green "Exchange Server 2010 Service Pack 3" }
-                    28373 { Write-Host -ForegroundColor green "Exchange Server 2013" }
-                    28490 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 1" }
-                    28517 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 2" }
-                    28519 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 3" }
-                    28528 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 4 - Service Pack 1" }
-                    28536 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 5" }
-                    28539 { Write-Host -ForegroundColor green "Exchange Server 2013 Cumulative Update 6" }
+                    15137 { Write-Host -ForegroundColor green " Exchange 2013 RTM " }
+                    15254 { Write-Host -ForegroundColor green " Exchange 2013 CU1 " }
+                    15281 { Write-Host -ForegroundColor green " Exchange 2013 CU2 " }
+                    15283 { Write-Host -ForegroundColor green " Exchange 2013 CU3 " }
+                    15292 { Write-Host -ForegroundColor green " Exchange 2013 SP1 " }
+                    15300 { Write-Host -ForegroundColor green " Exchange 2013 CU5 " }
+                    15303 { Write-Host -ForegroundColor green " Exchange 2013 CU6 " }
+                    15312 { Write-Host -ForegroundColor green " Exchange 2013 CU7-CU23 " }
+                    15317 { Write-Host -ForegroundColor green " Exchange 2016 RTM " }
+                    15323 { Write-Host -ForegroundColor green " Exchange 2016 CU1 " }
+                    15325 { Write-Host -ForegroundColor green " Exchange 2016 CU2 " }
+                    15326 { Write-Host -ForegroundColor green " Exchange 2016 CU3-CU5 " }
+                    15330 { Write-Host -ForegroundColor green " Exchange 2016 CU6 " }
+                    15332 { Write-Host -ForegroundColor green " Exchange 2016 CU7-CU13 " }
+                    17000 { Write-Host -ForegroundColor green " Exchange 2019 RTM-CU1 " }
+                    17001 { Write-Host -ForegroundColor green " Exchange 2019 CU2 " }
                     default {  Write-Host -ForegroundColor red "unknown - "$ExchangeSchemaVersion.rangeUpper }
                     
                 }
@@ -978,7 +984,7 @@ function Get-DomainInfo($DomainName)
                     1007 { Write-Host -ForegroundColor green "Office Communications Server 2007 Release 1" }
                     1008 { Write-Host -ForegroundColor green "Office Communications Server 2007 Release 2" }
                     1100 { Write-Host -ForegroundColor green "Lync Server 2010" }
-                    1150 { Write-Host -ForegroundColor green "Lync Server 2013" }
+                    1150 { Write-Host -ForegroundColor green "Lync Server 2013 / Skype for Business 2015" }
                     default {  Write-Host -ForegroundColor red "unknown - "$LyncSchemaVersion.rangeUpper }
                 
                 }
@@ -1521,9 +1527,6 @@ function Get-DomainInfo($DomainName)
     Write-Host ""
     # End of forest wide groups members
     
-    
-    
-
     # Custom Get-DomainInfo function executed for every domain in the forest
     
     $allDomains | Sort | %{ Get-DomainInfo ($_) }
@@ -1533,10 +1536,26 @@ function Get-DomainInfo($DomainName)
     Write-Host ""
     Write-Host ""
 
-    Write-Host -ForegroundColor white -BackgroundColor black "The end of Active Directory report"
+	#Script for output https://lazywinadmin.com/2014/04/powershell-get-list-of-my-domain.html
+    Write-Host -ForegroundColor yellow -BackgroundColor black "Organizational Unit Detail:"
+    $OUs = Get-ADObject -Filter { ObjectClass -eq 'organizationalunit' } -Properties CanonicalName
+                foreach ($OU in $OUs)
+
+                    {
+			$ThisCN = $OU.CanonicalName
+                        Write-Host $ThisCN
+                    }
 
     Write-Host ""
     Write-Host ""
+    Write-Host -ForegroundColor yellow -BackgroundColor black "Output AD Object Report to file: adobject.csv"
+    get-adobject -filter * -properties CanonicalName | select name,objectclass,distinguishedname,CanonicalName | export-csv adobject.csv -notype
+    
+    Write-Host ""
+    Write-Host ""
+    Write-Host -ForegroundColor white -BackgroundColor black "The end of Active Directory report. Please return adobject.csv and directory.txt."
     # End of data display
+
+
 
 stop-transcript
