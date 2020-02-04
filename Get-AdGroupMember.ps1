@@ -1,3 +1,7 @@
+#Automated script for building the Azure Hybrid Print service in your environment
+#By Chris Blackburn
+#Follow updates and issues @ https://github.com/thetootall/adscripts/blob/master/Get-AdGroupMember.ps1
+#Pulled from support from:
 #https://serverfault.com/questions/532945/list-all-groups-and-their-members-with-powershell-on-win2008r2
 
 Import-Module ActiveDirectory
